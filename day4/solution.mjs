@@ -60,18 +60,26 @@ const processLines = async () => {
 }
 
 function runGames({ callOrder, boards }) {
+  let remaining = boards
   for (let i = 0; i < callOrder.length; i++) {
     const numCalled = callOrder[i]
 
-    for (let ii = 0; i < boards.length; ii++) {
+    for (let ii = 0; ii < boards.length; ii++) {
       const board = boards[ii]
+
       for (let x = 0; x < board.length; x++) {
         for (let xx = 0; xx < board.length; xx++) {
-          if (board[x][xx] == numCalled) {
+          if (board[x][xx] === numCalled) {
             board[x][xx] = board[x][xx] * -1
-            if (isWinner(board)) {
-              console.log('winner!')
-              return board
+            remaining = remaining.filter(
+              (filteredBoard) => !isWinner(filteredBoard)
+            )
+            if (remaining.length === 0) {
+              console.log('last winner')
+              return {
+                winningBoard: board,
+                winningNumber: numCalled,
+              }
             }
           }
         }
@@ -83,7 +91,21 @@ function runGames({ callOrder, boards }) {
 async function main() {
   const { callOrder, boards } = await processLines()
 
-  const winningBoard = runGames({ callOrder, boards })
+  const { winningBoard, winningNumber } = runGames({ callOrder, boards })
+
+  // Sum all unmarked numbers
+  const sumOfUnmarked = winningBoard
+    .map((arr) => arr.filter((val) => val > 0))
+    .map((filteredArr) =>
+      filteredArr.length ? filteredArr.reduce((prev, curr) => prev + curr) : 0
+    )
+    .reduce((prevSum, currSum) => prevSum + currSum)
+
+  console.log(
+    `Sum of unmarked: ${sumOfUnmarked}, winning: ${winningNumber}, Result: ${
+      sumOfUnmarked * winningNumber
+    }`
+  )
 
   // Play the games.
   return 0
@@ -92,7 +114,10 @@ async function main() {
 /** Given 2D-array of bingo squares marked with -1 as "got it" */
 function isWinner(board) {
   const hasHorizontalWinner = board.some((array) =>
-    array.every((val) => val < 0)
+    array.every((val) => {
+      const sign = Math.sign(val)
+      return sign === -1 || sign === -0
+    })
   )
 
   if (hasHorizontalWinner) {
@@ -107,7 +132,12 @@ function isWinner(board) {
     }
   }
 
-  const hasVerticalWinner = verts.some((array) => array.every((val) => val < 0))
+  const hasVerticalWinner = verts.some((array) =>
+    array.every((val) => {
+      const sign = Math.sign(val)
+      return sign === -1 || sign === -0
+    })
+  )
 
   return hasVerticalWinner
 }
