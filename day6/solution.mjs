@@ -23,7 +23,7 @@ class Laternfish {
   }
 }
 
-const main = async (days) => {
+const mainSlow = async (days) => {
   const filePath = path.join(path.resolve(), 'input.txt')
   const input = await fs
     .readFile(filePath, { encoding: 'utf-8' })
@@ -49,4 +49,27 @@ const main = async (days) => {
   }
 }
 
-await main(256)
+const mainFast = async (days) => {
+  const filePath = path.join(path.resolve(), 'input.txt')
+  const input = await fs
+    .readFile(filePath, { encoding: 'utf-8' })
+    .catch((e) => console.log('Error reading file: ' + e))
+
+  // An array where index is the internal timer value of the
+  // Laternfish, and the value is the number of fish at that day.
+  const fish = new Array(9).fill(0)
+  const initFishes = input.split(',').forEach((days) => fish[days]++)
+
+  for (let i = 0; i < days; i++) {
+    // Fish with internal timer 0 on the new day produce new fish.
+    const newFish = fish.shift()
+    // They get reset.
+    fish[6] += newFish
+    // New fish on the back of the array (internal timer 8).
+    fish.push(newFish)
+  }
+
+  console.log('Total fish: ' + fish.reduce((prev, cur) => prev + cur))
+}
+
+await mainFast(256)
